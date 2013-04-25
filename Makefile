@@ -1,4 +1,4 @@
-CFLAGS = -I ../merge_data/ -I./utils/ -g -O0 -Wall -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I../standalone_kernel_module/ 
+CFLAGS = -I ../merge_data/ -I./utils/ -g -O0 -Wall -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/ -I../module -I../library
 LDFLAGS = -lglib-2.0 -lelf -lbfd -lnuma -lm
 OBJECTS = ./utils/symbols.o \
 			 ./utils/process.o \
@@ -62,4 +62,4 @@ parse: ${OBJECTS}
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 clean:
-	rm -f parse *.o utils/*.o
+	rm -f parse *.o utils/*.o makefile.dep
