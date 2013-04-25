@@ -31,7 +31,7 @@ void sched_parse(struct s* s) {
 
    int *v = rbtree_lookup(sched_tree, (void*)(long)get_tid(s), pointer_cmp);
    if(!v) {
-      v = calloc(MAX_NODE, sizeof(*v));
+      v = calloc(max_node, sizeof(*v));
       rbtree_insert(sched_tree, (void*)(long)get_tid(s), v, pointer_cmp);
    }
    v[phys_to_node(s->ibs_dc_phys)]++;
@@ -40,7 +40,7 @@ void sched_parse(struct s* s) {
 
 static int sched_do(void *key, void *value) {
    int max = 0, max_index = 0, i, *v = value;
-   for(i = 0; i < MAX_NODE; i++) {
+   for(i = 0; i < max_node; i++) {
       if(v[i] > max) {
          max = v[i];
          max_index = i;

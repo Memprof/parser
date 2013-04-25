@@ -3,8 +3,8 @@
 
 #define SHOW_MIN_THRES 1
 
-static int memory_repartition_on_nodes[MAX_NODE];
-static int sample_repartition_on_cpus[MAX_CPU];
+static int *memory_repartition_on_nodes;
+static int *sample_repartition_on_cpus;
 static int nb_seen_pages = 0;
 
 static rbtree memory_repartition_tree;
@@ -30,6 +30,11 @@ static __unused int memory_repartition_print(void *key, void *value) {
 }
 
 void memory_repartition_parse(struct s* s) {
+   if(!memory_repartition_on_nodes)
+      memory_repartition_on_nodes = calloc(1, sizeof(*memory_repartition_on_nodes)*max_node);
+   if(!sample_repartition_on_cpus)
+      sample_repartition_on_cpus = calloc(1, sizeof(*sample_repartition_on_cpus)*max_cpu);
+
    uint64_t udata3 = (((uint64_t)s->ibs_op_data3_high)<<32) + (uint64_t)s->ibs_op_data3_low;
    __unused ibs_op_data3_t *data3 = (void*)&udata3;
    /*if(!data3->ibsldop) //Northbridge data is only valid for load operations
@@ -50,8 +55,8 @@ void memory_repartition_parse(struct s* s) {
    *(int*)value = (*(int*) value) + 1;
 
    /* Detail by CPU */
-   if(s->cpu >= MAX_CPU) {
-      fprintf(stderr, "Seen CPU %d with MAX_CPU=%d\n", s->cpu, MAX_CPU);
+   if(s->cpu >= max_cpu) {
+      fprintf(stderr, "Seen CPU %d with MAX_CPU=%d\n", s->cpu, max_cpu);
       exit(-1);
    }
    sample_repartition_on_cpus[s->cpu]++;
@@ -87,7 +92,7 @@ void memory_repartition_show() {
       printf("#Node %d: %d (%.2f%%)\n", i, memory_repartition_on_nodes[i], 100.*((float)memory_repartition_on_nodes[i])/((float)sum));
    }
 #if 1
-   for(i = 0; i < MAX_CPU; i++) {
+   for(i = 0; i < max_cpu; i++) {
       if(sample_repartition_on_cpus[i]) {
          printf("#CPU %d: %d samples\n", i, sample_repartition_on_cpus[i]);
       }

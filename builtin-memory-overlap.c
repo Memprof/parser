@@ -211,12 +211,12 @@ static __unused int overlap_free(rbtree_node n) {
 }
 static __unused int overlap_get_sum_sons(int *vals) {
    int i;
-   int sum = vals[MAX_CPU];
+   int sum = vals[max_cpu];
    if(!sum) {
-      for(i = 0; i < MAX_CPU; i++) {
+      for(i = 0; i < max_cpu; i++) {
          sum += vals[i];
       }
-      vals[MAX_CPU] = sum;
+      vals[max_cpu] = sum;
    }
    return sum;
 }
@@ -297,10 +297,10 @@ static int overlap_print(void *key, void *_value) {
          if(s) {
             int *value = rbtree_lookup(t, s, pointer_cmp);
             if(!value) {
-               value = calloc(MAX_CPU + 1,sizeof(*value));
+               value = calloc(max_cpu + 1,sizeof(*value));
                rbtree_insert(t, s, value, pointer_cmp);
             }
-            assert(ip->cpu < MAX_CPU);
+            assert(ip->cpu < max_cpu);
             value[ip->cpu] = value[ip->cpu] + 1;
          }
       }
@@ -313,7 +313,7 @@ static int overlap_print(void *key, void *_value) {
          printf("\t%5d %30s [", 
                overlap_get_sum_sons(vals),
                ((struct symbol*)sorted->vals[i]->key)->function);
-         for(j = 0; j < MAX_CPU; j++) {
+         for(j = 0; j < max_cpu; j++) {
             printf("%3d ", vals[j]);
          }
          printf("]\n");

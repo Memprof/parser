@@ -20,9 +20,6 @@
 #include <sys/wait.h>
 #include <sched.h>
 
-#define MAX_NODE 5 /* 4 real + 1 fake */
-#define MAX_REAL_NODE 4 
-#define MAX_CPU 32
 #define PAGE_SIZE (4*1024)
 #define PAGE_MASK (~(PAGE_SIZE-1))
 #define ONE_GB (1LL*1024*1024*1024LL)

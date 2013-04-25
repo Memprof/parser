@@ -33,7 +33,7 @@ void top_parse(struct s* s) {
    if(sym) {
       int *value = rbtree_lookup(top_tree, sym, /*pointer_cmp*/sym_cmp);
       if(!value) {
-         value = calloc(1+2+(MAX_NODE),sizeof(*value));
+         value = calloc(1+2+(max_node),sizeof(*value));
          rbtree_insert(top_tree, sym, value, pointer_cmp);
       }
       value[0]++;
@@ -71,7 +71,7 @@ void top_show() {
             color,
             (float)100.*((float)vals[2])/((float)vals[1]+vals[2]));
       int j;
-      for(j = 0; j < MAX_NODE; j++) {
+      for(j = 0; j < max_node; j++) {
          printf(" %6d", vals[3+j]);
       }
       printf("]\n");

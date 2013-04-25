@@ -5,7 +5,7 @@
 
 static int pid;
 struct page {
-   int accesses[MAX_NODE];
+   int *accesses;
    void *addr;
 };
 struct pages_array {
@@ -33,6 +33,7 @@ void migrate_parse(struct s* s) {
    if(!v) {
       v = calloc(1, sizeof(*v));
       v->addr = addr;
+      v->accesses = calloc(1, sizeof(*v->accesses)*max_node);
       rbtree_insert(migrate_tree, addr, v, pointer_cmp);
    }
    v->accesses[cpu_to_node(s->cpu)]++;
@@ -41,7 +42,7 @@ void migrate_parse(struct s* s) {
 
 static int page_to_most_accessing_die(struct page *p) {
    int max = p->accesses[0], die = 0, i;
-   for(i = 1; i < MAX_NODE; i++) {
+   for(i = 1; i < max_node; i++) {
       if(p->accesses[i] > max) {
          max = p->accesses[i];
          die = i;

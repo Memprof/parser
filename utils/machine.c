@@ -7,14 +7,15 @@ cpu_set_t* (*die_cpu_set)(int die);
 uint64_t (*get_memory_size)(void);
 
 int max_node;
+int max_real_node;
 uint64_t *memory_bounds;
 
-static int max_cpu;
+int max_cpu;
 static int *_cpu_to_node;
 
 int phys_to_node(uint64_t addr) {
    int phys_node;
-   for(phys_node = 0; phys_node < max_node; phys_node++) {
+   for(phys_node = 0; phys_node < max_real_node; phys_node++) {
       if(addr < memory_bounds[phys_node]) {
          return phys_node;
       }
@@ -41,7 +42,7 @@ static cpu_set_t* die_cpu_set_generic(int die) {
 }
 
 uint64_t get_memory_size_generic() {
-   return memory_bounds[max_node - 1];
+   return memory_bounds[max_real_node - 1];
 }
 
 void set_machine_full(struct i *i) {
@@ -59,9 +60,10 @@ void set_machine_full(struct i *i) {
       die_cpu_set = die_cpu_set_generic;
    }
 
-   max_node = i->max_nodes;
-   memory_bounds = malloc(sizeof(*memory_bounds)*max_node);
-   for(j = 0; j < max_node; j++) {
+   max_node = i->max_nodes + 1;
+   max_real_node = i->max_nodes;
+   memory_bounds = malloc(sizeof(*memory_bounds)*max_real_node);
+   for(j = 0; j < max_real_node; j++) {
       memory_bounds[j] = i->node_end[j]*(4LL*1024LL);
    }
    get_memory_size = get_memory_size_generic;

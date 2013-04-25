@@ -3,7 +3,9 @@
 
 #include "memprof-structs.h"
 
-extern int machine;
+extern int max_node;
+extern int max_real_node;
+extern int max_cpu;
 
 /* Machine specific */
 extern uint64_t (*get_memory_size)(void);

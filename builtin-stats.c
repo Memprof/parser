@@ -3,8 +3,8 @@
 
 static rbtree rbtree_stats;
 typedef struct tid_stat {
-   int samples_per_cpu[NB_STAT_VALUES];
-   int remote_samples_per_cpu[MAX_NODE][MAX_CPU];
+   int *samples_per_cpu;
+   int *remote_samples_per_cpu;
    char *app;
    int pid;
    int last_cpu;
@@ -28,12 +28,14 @@ void stats_parse(struct s* s) {
       rbtree_insert(rbtree_stats, (void*)(long)get_tid(s), value, stat_tid_cmp);
       value->last_cpu = s->cpu;
       value->nb_cpus = 1;
+      value->remote_samples_per_cpu = calloc(1, sizeof(*value->remote_samples_per_cpu)*max_node*max_cpu);
+      value->samples_per_cpu = calloc(1, sizeof(*value->samples_per_cpu)*max_cpu + 1);
    }
-   assert(s->cpu < MAX_CPU);
+   assert(s->cpu < max_cpu);
    value->samples_per_cpu[s->cpu]++;
-   value->samples_per_cpu[STAT_TID_SUM_SAMPLES]++;
+   value->samples_per_cpu[max_cpu]++;
    if(s->ibs_dc_phys != 0) {
-      value->remote_samples_per_cpu[phys_to_node(s->ibs_dc_phys)][s->cpu]++;
+      value->remote_samples_per_cpu[phys_to_node(s->ibs_dc_phys)*max_cpu + s->cpu]++;
    }
    if(value->last_cpu != s->cpu) {
       value->last_cpu = s->cpu;
@@ -44,24 +46,24 @@ void stats_parse(struct s* s) {
 static int stat_tid_print(void *key, void* value) {
    int i, j;
    tid_stat_t *v = value;
-   printf("%ld: %5d\t[", (long)key, v->samples_per_cpu[STAT_TID_SUM_SAMPLES]);
-   for(i = 0; i < MAX_CPU; i++) 
+   printf("%ld: %5d\t[", (long)key, v->samples_per_cpu[max_cpu]);
+   for(i = 0; i < max_cpu; i++) 
       printf("%4d ", v->samples_per_cpu[i]);
    printf("]\n");
-   for(i = 0; i < MAX_REAL_NODE; i++) {
+   for(i = 0; i < max_real_node; i++) {
       if(i == 0) 
          printf("%8.8s\t[", v->app);
       else if(i == 1) 
          printf("%8d\t[", v->pid);
       else
          printf("\t\t[");
-      for(j = 0; j < MAX_CPU; j++) {
-         if(cpu_to_node(j) != i && v->remote_samples_per_cpu[i][j]) {
-            printf(RED "%4d " RESET, v->remote_samples_per_cpu[i][j]);
-         } else if(cpu_to_node(j) == i && v->remote_samples_per_cpu[i][j]) {
-            printf(GREEN "%4d " RESET, v->remote_samples_per_cpu[i][j]);
+      for(j = 0; j < max_cpu; j++) {
+         if(cpu_to_node(j) != i && v->remote_samples_per_cpu[i*max_cpu + j]) {
+            printf(RED "%4d " RESET, v->remote_samples_per_cpu[i*max_cpu + j]);
+         } else if(cpu_to_node(j) == i && v->remote_samples_per_cpu[i*max_cpu + j]) {
+            printf(GREEN "%4d " RESET, v->remote_samples_per_cpu[i*max_cpu + j]);
          } else {
-            printf("%4d ", v->remote_samples_per_cpu[i][j]);
+            printf("%4d ", v->remote_samples_per_cpu[i*max_cpu + j]);
          }
       }
       printf("\n");
