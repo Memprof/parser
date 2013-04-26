@@ -24,8 +24,11 @@ Options
 =======
 The most important options are:
 
-``
+```bash
 -M: outputs a list of function, sorted by the number of memory accesses they have performed 
+
 -X: ouputs the list of objects accessed in memory 
+
 --obj <id>: outputs the access pattern to the object <id>. <id> can be found using the -X option (it is the first number on each line of the -X output) 
-``
+
+```
