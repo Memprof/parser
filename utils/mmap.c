@@ -183,7 +183,12 @@ struct symbol* sample_to_function(struct s* s) {
          unknown.file = lib->lib;
          return &unknown;   
       }
-      
+
+      /** SASHA: Here we want to record one more field in our symbol struct:
+       * the offset into the function that performed the access. 
+       */
+      sym->func_offset =  (s->rip - lib->begin + lib->off) - (uint64_t)sym->ip;
+
       sample_to_symbol_stats.nb_success++;
       return sym;
    } else {

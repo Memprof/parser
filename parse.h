@@ -90,6 +90,8 @@ int get_latency(struct s *s);
 extern char *open_file_error;
 FILE* open_file(char *f);
 struct symbol *get_symbol(struct s *s);
+struct symbol *get_function(struct s *s);
+struct symbol *get_object(struct s *s);
 char *get_function_name(struct s *s);
 struct dyn_lib* get_mmap(struct s *s);
 int is_store(struct s *s);

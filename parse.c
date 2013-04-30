@@ -776,6 +776,21 @@ struct symbol *get_symbol(struct s *s) {
    return sample_to_function(s);
 }
 
+struct symbol *get_function(struct s *s) {
+   return sample_to_function(s);
+}
+
+struct symbol *get_object(struct s *s) {
+   struct symbol *ob = sample_to_variable2(s);
+   if(ob)
+      return ob;
+   ob = sample_to_static_object(s);
+   if(ob)
+      return ob;
+
+   return NULL;
+}
+
 char *get_function_name(struct s *s) {
    struct symbol * sym = get_symbol(s);
    return sym?sym->function:"";

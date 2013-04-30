@@ -135,18 +135,25 @@ void dump_parse(struct s* s) {
       loc_remote[local].arr[loc_remote[local].index].addr = s->ibs_dc_linear;
       loc_remote[local].index++;
    } else if(mode==1) {
-      printf("[PID %d TID %d (%s)] [valid %d] [RIP %p] [CPU %d] [ADDR LIN %p (PHYS %p)] [Cache %d Data2 %x]\n",
-            get_pid(s),
-            get_tid(s),
-            get_app(s),
-            get_tid(s),
-            (void*)s->rip,
-            (int)s->cpu,
-            (void*)s->ibs_dc_linear,
-            (void*)s->ibs_dc_phys,
-            (s->ibs_op_data3_low & (1<<7))>>7,
-            s->ibs_op_data2_low
-            );
+      /* SASHA: Here we print the offset within the 
+       * accessing function in addition to the function itself. 
+       */
+      char *var = sample_to_variable(s);
+      printf("[PID %d TID %d (%s)] [RIP %p] [CPU %d] [ADDR LIN %p (PHYS %p)] [Cache %d Data2 %x] [%s+(0x%lx)] [%s (%s)]\n",
+        get_pid(s),
+        get_tid(s),
+        get_app(s),
+        (void*)s->rip,
+        (int)s->cpu,
+        (void*)s->ibs_dc_linear,
+        (void*)s->ibs_dc_phys,
+        (s->ibs_op_data3_low & (1<<7))>>7,
+        s->ibs_op_data2_low,
+        get_symbol(s)->function,
+        get_symbol(s)->func_offset,   
+        var?var:"unknown",
+        sample_to_mmap(s)->name
+     );
    } else if(mode==5) {
       long latency = get_latency(s) / LATENCY_STEP;
       if(latency > 800/LATENCY_STEP)

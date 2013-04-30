@@ -11,25 +11,13 @@ struct dyn_lib {
    struct mmapped_dyn_lib *enclosing_lib;
 };
 
-/*struct symbol {
-   int uid;
-   union {
-      void *ip;
-      void *addr;
-   };
-   struct dyn_lib *file;
-   union {
-      char *function;
-      char *var_name;
-   };
-};*/
-
 /* See various functions in process.h to know how to get a struct symbol from an IBS sample */
 struct symbol {
    int uid;
-      void *ip; /** WARN: this is the translated IP inside the mmaped file. Hard to link with an actual RIP. */
+   void *ip; /** WARN: this is the translated IP inside the mmaped file. Hard to link with an actual RIP. */
    struct dyn_lib *file;
-      char *function;
+   char *function;
+   uint64_t func_offset;   /* SASHA */
 
    int tid;
    int cpu;
