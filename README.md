@@ -1,6 +1,5 @@
 Memprof Parser
 ==============
-
 The Memprof Parser. Used to analyse data collected by the module and by the library.
 
 WARNING: In order to compile the parser, you MUST have a copy of the Memprof Kernel module in ../module and a copy of the Memprof Library in ../library.
@@ -32,3 +31,5 @@ The most important options are:
 --obj <id>: outputs the access pattern to the object <id>. <id> can be found using the -X option (it is the first number on each line of the -X output) 
 
 ```
+
+Note: the parser API has changed since the publication of "MemProf: a Memory Profiler for NUMA Multicore Systems". We now use a much simpler API based on 2 functions: sample_to_variable2 and get_symbol that return respectively the accessed object and the function performing the access.
