@@ -1,5 +1,26 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "builtin-zones.h"
+
+/*
+ * Outputs clusters of pages. 
+ */
 
 static int mode = 1;
 static int cluster_size = 10000;
@@ -54,7 +75,7 @@ void zone_parse(struct s* s) {
       addresses = realloc(addresses, nb_addresses_max*sizeof(*addresses));
    }
    addresses[nb_addresses] = malloc(sizeof(*addresses[nb_addresses]));
-   if(mode == 1) {
+   if(mode == 2) {
       addresses[nb_addresses]->addr = s->ibs_dc_phys;
    } else {
       addresses[nb_addresses]->addr = s->ibs_dc_linear;
@@ -87,7 +108,6 @@ void zone_show() {
    uint64_t low_boundary = 0, high_boundary = 0;
    qsort (addresses, nb_addresses, sizeof (*addresses), cmp_addresses);
 
-
    for(i = 0; i < nb_addresses; i++) {
       if(addresses[i]->addr - high_boundary < cluster_size) {
          nb_elem++;
@@ -102,10 +122,11 @@ void zone_show() {
    if(nb_elem > 0) 
       insert_zone(nb_elem, low_boundary, high_boundary);
 
-   if(mode == 1)
+   if(mode == 2)
       printf("#Clustered by physical addresses (cluster size %d)\n", cluster_size);
    else
       printf("#Clustered by virtual addresses (cluster size %d)\n", cluster_size);
+   printf("#[low-address - high-address] %%access to this memory range\n");
 
    uint64_t sum = 0;
    struct mem_zone *m;

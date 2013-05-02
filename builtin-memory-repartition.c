@@ -1,5 +1,27 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "builtin-memory-repartition.h"
+
+/*
+ * Shows which cpu and applications access pages
+ * Shows on which nodes these pages reside
+ */
 
 #define SHOW_MIN_THRES 1
 
@@ -35,15 +57,10 @@ void memory_repartition_parse(struct s* s) {
    if(!sample_repartition_on_cpus)
       sample_repartition_on_cpus = calloc(1, sizeof(*sample_repartition_on_cpus)*max_cpu);
 
-   uint64_t udata3 = (((uint64_t)s->ibs_op_data3_high)<<32) + (uint64_t)s->ibs_op_data3_low;
-   __unused ibs_op_data3_t *data3 = (void*)&udata3;
-   /*if(!data3->ibsldop) //Northbridge data is only valid for load operations
-      return;*/
-
    if(s->ibs_dc_phys != 0) {
       memory_repartition_on_nodes[phys_to_node(s->ibs_dc_phys)]++;
    }
-#if 1
+
    /* Store the number of loads occurring on each page */
    void *addr = (void*)((s->ibs_dc_phys / PAGE_SIZE) * (PAGE_SIZE));
    void *value = rbtree_lookup(memory_repartition_tree, addr, memory_repartition_cmp);
@@ -70,7 +87,6 @@ void memory_repartition_parse(struct s* s) {
       rbtree_insert(app_repartition_tree, app, value, (compare_func)strcmp);
    }
    *(int*)value = (*(int*) value) + 1;
-#endif
 }
 
 static __unused int apps_print(void *key, void *value) {

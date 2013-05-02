@@ -15,13 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#ifndef BUILTIN_OBJ
-#define BUILTIN_OBJ
+#ifndef BUILTIN_MEMORY_LOCALIZE_H
+#define BUILTIN_MEMORY_LOCALIZE_H 1
 
-void obj_init();
-void obj_set(int uid);
-void obj_parse(struct s* s);
-void obj_show();
-void obj_modifier(int m);
+void top_mmap_init();
+void top_mmap_parse(struct s* s);
+void top_mmap_show();
 
 #endif
+

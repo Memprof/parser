@@ -1,5 +1,10 @@
 #include "parse.h"
-#include "builtin-cache.h"
+#include "builtin-memory-hierarchy.h"
+
+/*
+ * Shows were memory accesses found their data (L1, L2, L3, DRAM, ...).
+ * Called using the -C option.
+ */
 
 static int restrict_to_data_misses = 0;
 
@@ -39,7 +44,7 @@ static int load, store;
 static int lin_valid, phy_valid;
 static int nb_non_null_phys_kern, nb_non_null_phys_user;
 
-void cache_init() {
+void mem_hierarchy_init() {
    memset(global_data_source, 0, sizeof(global_data_source));
    memset(stack_data_source, 0, sizeof(stack_data_source));
    memset(kernel_data_source, 0, sizeof(kernel_data_source));
@@ -50,7 +55,7 @@ void cache_init() {
    nb_non_null_phys_user = nb_non_null_phys_kern = 0;
 }
 
-void cache_parse(struct s* s) {
+void mem_hierarchy_parse(struct s* s) {
    uint64_t udata3 = (((uint64_t)s->ibs_op_data3_high)<<32) + (uint64_t)s->ibs_op_data3_low;
    ibs_op_data3_t *data3 = (void*)&udata3;
    if(!s->ibs_dc_phys)
@@ -58,9 +63,6 @@ void cache_parse(struct s* s) {
 
    if(!restrict_to_data_misses || (restrict_to_data_misses && data3->ibsdcmiss)) {
       int status = (s->ibs_op_data2_low & 7) + 1*((s->ibs_op_data2_low & 16)>>1);
-      /*if(status == 0)
-         return;*/
-
       total_samples++;
 
       global_data_source[status]++;
@@ -87,8 +89,6 @@ void cache_parse(struct s* s) {
       if(data3->ibsdcphyaddrvalid)
          phy_valid++;
       if(s->ibs_dc_phys) {
-         /*if(cpu_to_node(s->cpu) != get_addr_node(s) && status == 3)
-            printf("#Bug: %d access locally to %d (%lx)\n", cpu_to_node(s->cpu), get_addr_node(s), s->ibs_dc_phys);*/
          if(is_kernel(s)) {
             nb_non_null_phys_kern++;
             if(cpu_to_node(s->cpu) != get_addr_node(s))
@@ -106,7 +106,7 @@ void cache_parse(struct s* s) {
    }
 }
 
-void cache_show() {
+void mem_hierarchy_show() {
    int i, n, sum_glob = 0, sum_stack = 0, sum_user = 0, sum_kernel = 0, sum_irq, sum_local = 0, sum_distant = 0, sum_local_user = 0, sum_distant_user = 0, sum_local_kernel = 0, sum_distant_kernel = 0;
 
    printf("\t\t");
@@ -171,7 +171,7 @@ void cache_show() {
    }
    printf("\n");
 
-   printf("SoftIRQ:\t");
+   printf("SoftIRQ: (no longer supported)\t");
    for(i = 0; i < 12; i++) {
       if(i==4 || i==5 || i==6 || i==7 || i==8 || i==9) continue;
       printf("%d\t(%5.2f%%)\t", softirq_data_source[i], 100.*((float)softirq_data_source[i])/((float)sum_irq));

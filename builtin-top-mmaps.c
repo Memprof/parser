@@ -1,5 +1,22 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
-#include "builtin-memory-localize.h"
+#include "builtin-top-mmaps.h"
 
 static int nb_samples;
 static rbtree touched_mmaped_zones;
@@ -10,17 +27,13 @@ struct mmaped_zone_stat {
    int nb_remote_accesses;
 };
 
-void memory_localize_init() {
+void top_mmap_init() {
    touched_mmaped_zones =  rbtree_create();
    nb_samples = 0;
 }
-void memory_localize_parse(struct s* s) {
+void top_mmap_parse(struct s* s) {
    if(!s->ibs_dc_phys || s->ibs_dc_phys > get_memory_size())
       return;
-
-   /*struct symbol *ss = get_symbol(s);
-   if(strstr(ss->function, "@plt"))
-      return;*/
 
    struct dyn_lib * l = sample_to_mmap(s);
    if(!l)
@@ -54,7 +67,7 @@ static int localize_sort(const void *_a, const void *_b) {
    return b->nb_accesses - a->nb_accesses;
 }
 
-void memory_localize_show() {
+void top_mmap_show() {
    int i;
    rbtree_key_val_arr_t *sorted = rbtree_sort(touched_mmaped_zones, localize_sort);
    for(i = 0; i < sorted->nb_elements; i++) { 

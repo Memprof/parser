@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "builtin-object.h"
 
@@ -93,11 +110,14 @@ static __unused int top_cmp(const void *a, const void* b) {
 }
 
 void obj_show() {
+   int i;
+
+   printf("Timeline of memory access: (x = load, * = write, one column per tid):\n"),
    rbtree_print(timeline, print_timeline);
 
    printf("\n\n\n");
+   printf("Top functions accessing the object (#access, function):\n");
    rbtree_key_val_arr_t *sorted = rbtree_sort(top, top_cmp);
-   int i;
    for(i = 0; i < sorted->nb_elements; i++) { 
       int *vals = (int*)sorted->vals[i]->value;
       printf("%8d %5.2f%% %s\n",

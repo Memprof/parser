@@ -1,14 +1,35 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
-#include "builtin-top.h"
+#include "builtin-top-functions.h"
+
+/*
+ * Outputs the top functions (sorted by # of samples)
+ */
 
 static int cluster_by_lib = 0;
-void top_modifier(int m) {
+void top_fun_modifier(int m) {
    cluster_by_lib = m;
 }
 
 static rbtree top_tree;
 static int nb_samples;
-void top_init() {
+void top_fun_init() {
    top_tree = rbtree_create();
    nb_samples = 0;
 }
@@ -20,15 +41,7 @@ static int sym_cmp(void *a, void *b) {
    return pointer_cmp(a, b);
 }
 
-void top_parse(struct s* s) {
-   /*struct dyn_lib *l = sample_to_mmap(s);
-   if(!strcmp(l->name, "[unknown-lib]")) {
-      //printf("skip\n");
-      return; 
-   } else {
-      printf("@=%p\n", s->ibs_dc_linear);
-   }*/
-
+void top_fun_parse(struct s* s) {
    struct symbol *sym = get_symbol(s);
    if(sym) {
       int *value = rbtree_lookup(top_tree, sym, /*pointer_cmp*/sym_cmp);
@@ -54,7 +67,7 @@ static __unused int top_cmp(const void *a, const void* b) {
    const rbtree_node _b = *(const rbtree_node*) b;
    return *(int*)_b->value - *(int*)_a->value;
 }
-void top_show() {
+void top_fun_show() {
    /* Sort the rbtree by count value */
    rbtree_key_val_arr_t *sorted = rbtree_sort(top_tree, top_cmp);
    int i;

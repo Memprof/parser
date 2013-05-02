@@ -15,13 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#ifndef BUILTIN_OBJ
-#define BUILTIN_OBJ
+#ifndef BUILTIN_TOP_H
+#define BUILTIN_TOP_H 1
 
-void obj_init();
-void obj_set(int uid);
-void obj_parse(struct s* s);
-void obj_show();
-void obj_modifier(int m);
+void top_fun_init();
+void top_fun_parse(struct s* s);
+void top_fun_show();
+void top_fun_modifier(int m);
 
 #endif

@@ -1,8 +1,25 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "builtin-memory-overlap.h"
 
 /**
- * Overview: Show informations about pages accessed by multiple applications.
+ * Overview: Show informations about objects accessed by multiple applications.
  * - overlap_add_application/tid: add an application/tid to monitor
  * - overlap_parse: construct and fill page_informations_t for each touched page.
  * - overlap_show: show informations: kernel vs user; top accessing functions, etc.
@@ -63,10 +80,6 @@ void overlap_add_tid_unshared(int tid) {
 }
 
 void overlap_init() {
-   /*if(nb_overlapping_apps <= 1) {
-      fprintf(stderr, "Please specify at least two applications, e.g. -O app1 -O app2\n");
-      exit(-1);
-   }*/
    overlap_tree = rbtree_create();
    nb_overlap_in_kernel = nb_overlap_total = nb_non_overlap = 0;
    sum_overlap = sum_non_overlap = 0;
@@ -75,7 +88,7 @@ void overlap_init() {
 int values_sum(int *v, int *non_null) {
    int i, sum = 0;
    *non_null = 0;
-   for(i = 0; i < nb_overlapping_apps + nb_overlapping_tids + nb_overlapping_pids; i++) {                                                                                                            
+   for(i = 0; i < nb_overlapping_apps + nb_overlapping_tids + nb_overlapping_pids; i++) {
       if(v[i] != 0) {
          (*non_null)++;
          sum += v[i];
@@ -92,13 +105,6 @@ int values_sum(int *v, int *non_null) {
 void overlap_parse(struct s* s) {
    uint64_t udata3 = (((uint64_t)s->ibs_op_data3_high)<<32) + (uint64_t)s->ibs_op_data3_low;
    ibs_op_data3_t *data3 = (void*)&udata3;
-   //if(!data3->ibsstop)
-   //   return;
-
-   /* If data does not come from a L3 (2) or DRAM (3), ignore */
-   /*int status = s->ibs_op_data2_low & 7;
-   if(status != 2 && status != 3) 
-      return;*/
 
    /* Does the symbol belongs to the monitored set ? */
    int app_num = -1, i/*, non_null*/;
@@ -128,16 +134,10 @@ void overlap_parse(struct s* s) {
    //void *addr = (void*)((s->ibs_dc_phys / PAGE_SIZE) * (PAGE_SIZE));
    //void *addr = (void*)((s->ibs_dc_linear / PAGE_SIZE) * (PAGE_SIZE));
    struct dyn_lib * l = sample_to_mmap(s);
-   struct symbol *ob = sample_to_static_object(s); //unsafe, may return NULL ; static object
-   struct symbol *ob2 = sample_to_variable2(s); //idem ; malloc object
-   char *addr = NULL;
-   if(ob2)
-      addr = ob2->function;
-   if(!addr && ob)
-      addr = ob->function;
-   //addr = (void*)((s->ibs_dc_phys / PAGE_SIZE) * (PAGE_SIZE));
-   if(addr == NULL)
+   struct symbol *ob = get_object(s); 
+   if(ob == NULL)
       return;
+   void *addr = ob->function;
 
    page_informations_t *v = rbtree_lookup(overlap_tree, addr, pointer_cmp);
    if(!v) {
@@ -145,7 +145,7 @@ void overlap_parse(struct s* s) {
       v->value = calloc(NB_STORED_FIELDS, sizeof(*v->value));
       rbtree_insert(overlap_tree, addr, v, pointer_cmp);
       //v->name = l->name;
-      v->name = addr;
+      v->name = ob->function;
       if(l->enclosing_lib)
          v->uid = l->enclosing_lib->uid;
    } 
@@ -273,8 +273,6 @@ static int overlap_print(void *key, void *_value) {
       mmaped_total_overlap_sum += sum;
 
       /* Basic information: who accessed, how much */
-      //printf("%18lu ", (long unsigned)key);
-      //printf("%015lx ", (long unsigned) key);
       printf("%s", (char*) value->name);
       for(i = 0; i < nb_overlapping_apps + nb_overlapping_tids + nb_overlapping_pids; i++) {
          printf("%8d [store %5d load %5d] ", v[i], v[STORE_INDEX(i)], v[LOAD_INDEX(i)]);

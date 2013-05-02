@@ -1,22 +1,48 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "compatibility.h"
-#include "builtin-memory-repartition.h"
-#include "builtin-stack-repartition.h"
-#include "builtin-dump.h"
-#include "builtin-cache.h"
-#include "builtin-memory-overlap.h"
-#include "builtin-stats.h"
-#include "builtin-sched.h"
-#include "builtin-top.h"
-#include "builtin-get-pid.h"
-#include "builtin-memory-localize.h"
-#include "builtin-zones.h"
-#include "builtin-migrate.h"
-#include "builtin-static-obj.h"
-#include "builtin-get-npages.h"
-#include "builtin-sql.h"
-#include "builtin-object.h"
-#include "builtin-pages.h"
+
+/* Samples analysis */
+#include "builtin-top-functions.h"      // -M --top-fun
+#include "builtin-top-mmaps.h"          // --top-mmap
+#include "builtin-top-obj.h"            // -X --top-obj
+#include "builtin-object.h"             // --obj <uid>
+#include "builtin-memory-overlap.h"     // -O -P -T -N
+#include "builtin-stats.h"              // -S
+#include "builtin-zones.h"              // -Z
+#include "builtin-pages.h"              // --pages
+
+/* Statistics on samples (repartition, etc.) */
+#include "builtin-memory-hierarchy.h"   // -C
+#include "builtin-memory-repartition.h" // -m
+#include "builtin-get-sched-stats.h"    // --get-sched-stats <tid>
+#include "builtin-get-npages.h"         // --get-npages <tid>
+
+
+/* Options stat might modify the machine state (thread placement, etc.) */
+#include "builtin-sched.h"              // --sched <app>
+#include "builtin-migrate.h"            // --migrate
+
+/* Utility options */
+#include "builtin-dump.h"               // -dX [X between 1 and 9]
+#include "builtin-stack-check.h"        // --stack
+#include "builtin-sql.h"                // dump a trace in sql format
 
 #include <getopt.h>
 static int pipe_to_less();
@@ -63,42 +89,51 @@ uint64_t last_rdt = 0;
 char *alloc_location = NULL;
 
 void usage() {
-   fprintf(stderr, "Usage : ./parse [option] file\n");
-   fprintf(stderr, "Mandatory options (select one):\n");
-   fprintf(stderr, "\t-V                      \tOptimize the dumped file. Will speed up following parsings.\n");
-   fprintf(stderr, "\t-m, --memory-repartition\tMemory repartition\n");
-   fprintf(stderr, "\t-M, --top               \tShow top functions\n");
+   fprintf(stderr, "Usage : ./parse [--perf perf.raw] [--data data.processed.raw] [option] ibs.raw\n");
+   fprintf(stderr, "\nTo obtain .raw files:\n");
+   fprintf(stderr, "\tsudo insmod ../module/memprof.ko; echo b > /proc/memprof_cntl;\n");
+   fprintf(stderr, "\tLD_PRELOAD=../library/ldlib.so <app>;\n");
+   fprintf(stderr, "\techo e > /proc/memprof_cntl;\n");
+   fprintf(stderr, "\tcat /proc/memprof_ibs > ibs.raw\n");
+   fprintf(stderr, "\tcat /proc/memprof_perf > perf.raw\n");
+   fprintf(stderr, "\t../library/merge /tmp/data.raw #will create data.processed.raw in current dir\n");
+   fprintf(stderr, "\nMandatory options (select one):\n");
+   fprintf(stderr, "\t-M, --top-fun           \tShow top functions\n");
+   fprintf(stderr, "\t-X, --top-obj [-2]      \tShow most accessed objects\n");
+   fprintf(stderr, "\t                        \tAdd a -2 to cluster objects by the location (function) where they were allocated\n");
+   fprintf(stderr, "\t--obj <uid>             \tShow access patterns to object <uid> (uid can be found with option -X)\n");
+   fprintf(stderr, "\t--pages <uid>           \tShow accesses to pages of object <uid> (uid can be found with option -X)\n");
+   fprintf(stderr, "\t--get-npages <library>  \tShow number of accessed pages of library <library> (e.g. libc.so)\n");
+   fprintf(stderr, "\t--top-mmap              \tShow most accesses mmmaps (less precise than objects)\n");
+   fprintf(stderr, "\t-Z <size> [-2]          \tReturns ranges of virtual addresses where most of the accesses are performed (less precise than mmaps)\n");
+   fprintf(stderr, "\t                        \tIf two addresses are separated by less than <size>, they are grouped in the same cluster\n");
+   fprintf(stderr, "\t                        \tAdd a '-2' after to size to cluster by physical addresses (meaningless most of the time)\n");
+   fprintf(stderr, "\t-O, --overlap-app <app> \tShow objects that are accessed by multiple apps\n");
+   fprintf(stderr, "\t-P, --overlap-pid <pid> \tShow objects that are accessed by multiple pids\n");
+   fprintf(stderr, "\t-T, --overlap-tid <tid> \tShow objects that are accessed by multiple tids\n");
+   fprintf(stderr, "\t                        \te.g.: ./parse -O httpd -O php-cgi -T 4852 log.raw\n");
+   fprintf(stderr, "\t                        \t      Show objects manipulated by at least two tids from {httpd's tids, php's tids, <4852>}\n");
+   fprintf(stderr, "\t-N, --non-shared <tid>  \tShow physical pages which are accessed only by <tid>\n");
+   fprintf(stderr, "\t                        \te.g.: ./parse -O httpd -N 4852 log.raw\n");
+   fprintf(stderr, "\t                        \t      Show objects manipulated by <4852> but NOT by any other httpd tid\n");
+   fprintf(stderr, "\t-m                      \tShow stats: memory Memory repartition (Applications/Nodes/Cpu)\n");
+   fprintf(stderr, "\t-C                      \tShow stats: memory access repartition (DRAM/Stack/... User/Kernel/...)\n");
+   fprintf(stderr, "\t-S, --stats             \tShow stats: number of accessed pages per tid, per core to each node, with nice colors\n");
+   fprintf(stderr, "\t--get-sched-stats <tid> \tReturns the number of node changes of <tid> (and also outputs the pid of <tid>)\n");
    fprintf(stderr, "\t-dX                     \tDump raw file in a readable format (X in {1..9}, 1 is default)\n");
    fprintf(stderr, "\t                        \t* 1: dump IBS samples without any analysis\n");
    fprintf(stderr, "\t                        \t* 2: dump IBS samples with function and accessed variables\n");
    fprintf(stderr, "\t                        \t* 3-4: legacy options, not useful anymore\n");
    fprintf(stderr, "\t                        \t* 5: Breakdown of latency of memory accesses\n");
    fprintf(stderr, "\t                        \t* 6: For each studied threads, the number of cpu switch\n");
-   fprintf(stderr, "\t                        \t* 7: Linear addresses touched by all threads plot'able with gnuplot/threads.cmd\n");
-   fprintf(stderr, "\t                        \t* 8: Physical addresses touched by all threads plot'able with gnuplot/threads.cmd\n");
-   fprintf(stderr, "\t                        \t* 9: Locality of memory accesses plot'able with gnuplot/locality.cmd\n");
-   fprintf(stderr, "\t-O, --overlap-app <app> \tShow physical pages which are accessed by multiple apps\n");
-   fprintf(stderr, "\t-P, --overlap-pid <pid> \tShow physical pages which are accessed by multiple pids\n");
-   fprintf(stderr, "\t-T, --overlap-tid <tid> \tShow physical pages which are accessed by multiple tids\n");
-   fprintf(stderr, "\t                        \te.g.: ./parse -O httpd -O php-cgi -T 4852 log.raw\n");
-   fprintf(stderr, "\t                        \t      Show pages manipulated by at least two tids from {httpd's tids, php's tids, <4852>}\n");
-   fprintf(stderr, "\t-N, --non-shared <tid>  \tShow physical pages which are accessed only by <tid>\n");
-   fprintf(stderr, "\t                        \te.g.: ./parse -O httpd -N 4852 log.raw\n");
-   fprintf(stderr, "\t                        \t      Show pages manipulated by <4852> but NOT by any other httpd tid\n");
-   fprintf(stderr, "\t-C                      \tShow stats: memory access repartition (DRAM/Stack/... User/Kernel/...)\n");
-   fprintf(stderr, "\t-S, --stats             \tShow stats: number of accessed pages per tid, per core to each node, with nice colors\n");
-   fprintf(stderr, "\t--mem                   \tPrint mmaps touched by samples\n");
-   fprintf(stderr, "\t--get-pid <tid>         \tReturns the pid of <tid>\n");
-   fprintf(stderr, "\t-Z <size> [-2]          \tReturns ranges of physical addresses where most of the accesses are performed\n");
-   fprintf(stderr, "\t                        \tIf two addresses are separated by less than <size>, they are grouped in the same cluster\n");
-   fprintf(stderr, "\t                        \tAdd a '-2' after to size to cluster by virtual addresses (more useful most of the time)\n");
-   fprintf(stderr, "\t-X                      \tShow most accessed objects\n");
-   fprintf(stderr, "\t--obj <uid>             \tShow information about object <uid>\n");
+   fprintf(stderr, "\t                        \t* 7: Linear addresses touched by all threads plot'able with ../scripts/threads.cmd\n");
+   fprintf(stderr, "\t                        \t* 8: Physical addresses touched by all threads plot'able with ../scripts/threads.cmd\n");
+   fprintf(stderr, "\t                        \t* 9: Locality of memory accesses plot'able with ../scripts/locality.cmd\n");
    fprintf(stderr, "\t--sched <app>           \tTaskset <app> according to its memory accesses pattern\n");
    fprintf(stderr, "\t                        \tMultiple apps may be specified with multiple --sched parameters\n");
    fprintf(stderr, "\t--migrate               \tMigrate memory pages close to the thread using them most\n");
    fprintf(stderr, "\t--sql                   \tConvert a profiling file to an SQL dump\n");
-   fprintf(stderr, "\nOther options:\n");
+   fprintf(stderr, "\nOther options (filters):\n");
    fprintf(stderr, "\t-a, --app <app>         \tShow only samples of application <app>\n");
    fprintf(stderr, "\t-p, --pid <pid>         \tShow only samples of pid <pid>\n");
    fprintf(stderr, "\t-t, --tid <tid>         \tShow only samples of tid <tid>\n");
@@ -110,8 +145,6 @@ void usage() {
    fprintf(stderr, "\t--non-local-cache       \tShow only samples not accessing local L1 or L2\n");
    fprintf(stderr, "\t-u, --user              \tShow ONLY samples coming from userland\n");
    fprintf(stderr, "\t-k, --kernel            \tShow ONLY samples coming from kernelland\n");
-   fprintf(stderr, "\t-i, --softirq           \tShow ONLY samples coming from softirqland\n");
-   fprintf(stderr, "\t-I, --non-softirq       \tShow ONLY samples NOT coming from softirqland\n");
    fprintf(stderr, "\t-f, --function <f>      \tShow ONLY samples coming from function <f>\n");
    fprintf(stderr, "\t-F, --Function <f>      \tShow only samples coming from functions m/f/\n");
    fprintf(stderr, "\t--allocated <location>  \tShow only samples touching objects allocated from <location>\n");
@@ -124,11 +157,12 @@ void usage() {
    fprintf(stderr, "\t                        \t<a> and <b> can be either hexa or decimal, e.g., --phys 0xa-0xb or --phys 10-11\n");
    fprintf(stderr, "\t--virt <a>-<b>          \tShow ONLY samples that access memory between <a> and <b> virtual addresses\n");
    fprintf(stderr, "\t--time <a>-<b>          \tShow ONLY samples happening between <a> and <b> (rdtscll values)\n");
-   fprintf(stderr, "\t--latency <l>           \tShow ONLY samples whose latency is more than l\n");
+   fprintf(stderr, "\t--latency <l>           \tShow ONLY samples whose latency is more than l (according to IBS)\n");
    fprintf(stderr, "\t--bin, -B <path>        \tPath to binaries and libraries. If specified, samples will be resolved with libraries stored in that path\n");
+   fprintf(stderr, "\t--stdout                \tPrint output to stdout directly instead of piping to a less\n");
    fprintf(stderr, "\t-v                      \tVerbose\n");
    fprintf(stderr, "Legacy options:\n");
-   fprintf(stderr, "\t--stack                 \tShow percentage of hits in the stack (not working well...)\n");
+   fprintf(stderr, "\t--stack                 \tShow percentage of hits in the stack\n");
    fprintf(stderr, "\t--machine <m>           \tSpecify the machine name. E.g. --machine sci100. Currently ignored.\n");
    exit(-1);
 }
@@ -143,20 +177,18 @@ void parse_options(int argc, char** argv) {
    while (1) {
       static struct option long_options[] = {
          {"memory-repartition",     no_argument,       0, 'm'},
-         {"mem",     no_argument,       0, 'W'},
+         {"top-mmap",     no_argument,       0, 'W'},
          {"dump",  no_argument,       0, 'd'},
          {"stack",  no_argument, 0, '!'},
          {"cache-hit",  no_argument, 0, 'C'},
          {"stats",  no_argument, 0, 'S'},
          {"user",  no_argument, 0, 'u'},
          {"kernel",  no_argument, 0, 'k'},
-         {"softirq",  no_argument, 0, 'i'},
-         {"non-softirq",  no_argument, 0, 'I'},
          {"stdout",  no_argument, 0, '*'},
-         {"top",  no_argument, 0, 'M'},
+         {"top-fun",  no_argument, 0, 'M'},
          {"sql",  no_argument, 0, 's'},
-         {"static",  no_argument, 0, 'X'},
-         {"static",  no_argument, 0, 'Y'},
+         {"top-obj",  no_argument, 0, 'X'},
+         {"get-npages",  no_argument, 0, 'Y'},
          {"st",  no_argument, 0, ';'},
          {"ld",  no_argument, 0, '.'},
          {"DRAM",  no_argument, 0, '|'},
@@ -167,7 +199,7 @@ void parse_options(int argc, char** argv) {
          {"tid",  required_argument, 0, 't'},
          {"cpu",  required_argument, 0, 'c'},
          {"sched",  required_argument, 0, '%'},
-         {"get-pid",  required_argument, 0, '$'},
+         {"get-sched-stats",  required_argument, 0, '$'},
          {"obj",  required_argument, 0, '@'},
          {"pages",  optional_argument, 0, '\''},
          {"migrate",  no_argument, 0, '<'},
@@ -271,23 +303,22 @@ void parse_options(int argc, char** argv) {
             break;
 
          case 'W':
-            init = memory_localize_init;
-            parse = memory_localize_parse;
-            show_results = memory_localize_show;
+            init = top_mmap_init;
+            parse = top_mmap_parse;
+            show_results = top_mmap_show;
             break;
 
          case 'X':
-            init = static_obj_init;
-            parse = static_obj_parse;
-            show_results = static_obj_show;
-            modifier_function = static_obj_modifier;
+            init = top_obj_init;
+            parse = top_obj_parse;
+            show_results = top_obj_show;
+            modifier_function = top_obj_modifier;
             break;
 
-
          case '!':
-            init = stack_repartition_init;
-            parse = stack_repartition_parse;
-            show_results = stack_repartition_show;
+            init = stack_check_init;
+            parse = stack_check_parse;
+            show_results = stack_check_show;
             break;
 
          case 'd':
@@ -298,9 +329,9 @@ void parse_options(int argc, char** argv) {
             break;
 
          case 'C':
-            init = cache_init;
-            parse = cache_parse;
-            show_results = cache_show;
+            init = memory_repartition_init;
+            parse = memory_repartition_parse;
+            show_results = memory_repartition_show;
             break;
 
          case 'O':
@@ -359,18 +390,18 @@ void parse_options(int argc, char** argv) {
             break;
 
          case 'M':
-            init = top_init;
-            parse = top_parse;
-            show_results = top_show;
-            modifier_function = top_modifier;
+            init = top_fun_init;
+            parse = top_fun_parse;
+            show_results = top_fun_show;
+            modifier_function = top_fun_modifier;
             break;
 
          case '$':
             force_stdout = 1;
-            init = get_pid_init;
-            parse = get_pid_parse;
-            show_results = get_pid_show;
-            get_pid_set(atoi(optarg));
+            init = get_sched_stats_init;
+            parse = get_sched_stats_parse;
+            show_results = get_sched_stats_show;
+            get_sched_stats_set(atoi(optarg));
             break;
 
          case 'Z':

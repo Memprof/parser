@@ -1,8 +1,30 @@
+/*
+Copyright (C) 2013  
+Baptiste Lepers <baptiste.lepers@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+version 2, as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 #include "parse.h"
 #include "builtin-dump.h"
 #include <math.h>
 
-#define LATENCY_STEP 20
+/*
+ * Various dumps of information
+ * Some outputs are thought to be piped to gnuplot or to perl/python scripts
+ */
+
+#define LATENCY_STEP 20 // breakdown latencies in chucks of X cycles, e.g. 0-20, 20-40, etc.
 
 static int nb_ignored, nb_printed;
 static uint64_t min_page, max_page;
@@ -78,12 +100,8 @@ static int cmp_addresses(const void *_a, const void *_b) {
 double average(double *nums, int maxNums) {
    double sum = 0;
    int i;
-
-   /*add up all the numbers*/
    for( i = 0; i < maxNums; i++)
       sum += nums[i];
-
-   /*return the total/number of values (the mean)*/
    return sum/maxNums;
 }
 
@@ -149,8 +167,8 @@ void dump_parse(struct s* s) {
         (void*)s->ibs_dc_phys,
         (s->ibs_op_data3_low & (1<<7))>>7,
         s->ibs_op_data2_low,
-        get_symbol(s)->function,
-        get_symbol(s)->func_offset,   
+        get_function(s)->function,
+        get_function(s)->func_offset,   
         var?var:"unknown",
         sample_to_mmap(s)->name
      );
@@ -179,8 +197,7 @@ void dump_parse(struct s* s) {
          latencies_list_max += 10000;
          latencies_list = realloc(latencies_list, sizeof(*latencies_list)*latencies_list_max);
       }
-      //if(get_latency(s) > 10 && get_latency(s) < 1000)
-         latencies_list[latencies_list_index++] = get_latency(s);
+      latencies_list[latencies_list_index++] = get_latency(s);
 
       if(!ffirst_rdt)
          ffirst_rdt = s->rdt;
@@ -196,15 +213,6 @@ void dump_parse(struct s* s) {
       if(s->ibs_dc_phys > get_memory_size())
          return;
 
-      /*if(s->ibs_dc_phys < 10000000000LL)
-        return;
-        if(s->ibs_dc_phys > 20000000000LL)
-        return;*/
-
-      /*int status = s->ibs_op_data2_low & 7;
-        if(!status) 
-        return;*/
-
       if(nb_addresses >= nb_addresses_max) {
          nb_addresses_max*=2;
          addresses = realloc(addresses, nb_addresses_max*sizeof(*addresses));
@@ -219,7 +227,7 @@ void dump_parse(struct s* s) {
          addresses[nb_addresses]->addr = s->ibs_dc_linear;
       addresses[nb_addresses]->cpu = s->cpu;
       addresses[nb_addresses]->pid = get_tid(s);
-      addresses[nb_addresses]->sym = get_symbol(s);
+      addresses[nb_addresses]->sym = get_function(s);
       addresses[nb_addresses]->app = strdup(get_app(s));
       addresses[nb_addresses]->mmap = sample_to_mmap(s);
       addresses[nb_addresses]->mmap2 = sample_to_mmap2(s);

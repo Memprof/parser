@@ -15,13 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#ifndef BUILTIN_OBJ
-#define BUILTIN_OBJ
+#ifndef BUILTIN_STACK_REP
+#define BUILTIN_STACK_REP
+#include "memprof-structs.h"
 
-void obj_init();
-void obj_set(int uid);
-void obj_parse(struct s* s);
-void obj_show();
-void obj_modifier(int m);
+void stack_check_init();
+void stack_check_parse(struct s* s);
+void stack_check_show();
 
 #endif

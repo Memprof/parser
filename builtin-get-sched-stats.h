@@ -15,13 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#ifndef BUILTIN_OBJ
-#define BUILTIN_OBJ
+#ifndef BUILTIN_GET_PID
+#define BUILTIN_GET_PID 1
 
-void obj_init();
-void obj_set(int uid);
-void obj_parse(struct s* s);
-void obj_show();
-void obj_modifier(int m);
+void get_sched_stats_set(int tid);
+void get_sched_stats_init();
+void get_sched_stats_parse(struct s* s);
+void get_sched_stats_show();
 
 #endif
+

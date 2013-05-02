@@ -10,19 +10,19 @@ OBJECTS = ./utils/symbols.o \
 			 ./utils/perf.o \
 			 ./utils/data.o \
 			 ./utils/mmap.o \
-			 builtin-memory-repartition.o \
-			 builtin-stack-repartition.o \
+			 builtin-top-functions.o \
+			 builtin-top-obj.o \
+			 builtin-top-mmaps.o \
+			 builtin-stack-check.o \
 			 builtin-dump.o \
-			 builtin-cache.o \
+			 builtin-memory-hierarchy.o \
 			 builtin-memory-overlap.o \
 			 builtin-stats.o \
 			 builtin-sched.o \
-			 builtin-top.o \
-			 builtin-get-pid.o \
-			 builtin-memory-localize.o \
+			 builtin-get-sched-stats.o \
+			 builtin-memory-repartition.o \
 			 builtin-zones.o \
 			 builtin-migrate.o \
-			 builtin-static-obj.o \
 			 builtin-get-npages.o \
 			 builtin-sql.o \
 			 builtin-object.o \

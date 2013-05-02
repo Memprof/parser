@@ -1,6 +1,9 @@
 #include "parse.h"
 #include "builtin-get-npages.h"
 
+/* Get the number of touched pages of a given library */
+/* E.g., -- libc.so */
+
 static char *name_filter = NULL;
 static int nb_pages = 0;
 static rbtree pages;
@@ -25,7 +28,6 @@ void get_npages_parse(struct s* s) {
 
    nb_pages++;
    rbtree_insert(pages, (void*)page, (void*)1, pointer_cmp);
-   printf("Found page on node %d\n", get_addr_node(s));
 }
 
 void get_npages_show() {
