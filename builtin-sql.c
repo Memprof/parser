@@ -41,14 +41,11 @@ void sql_init() {
 }
 static int aid = 0;
 void sql_parse(struct s* s) {
-   struct symbol *ob = sample_to_static_object(s); //unsafe, may return NULL ; static object
-   struct symbol *ob2 = sample_to_variable2(s); //idem ; malloc object
+   struct symbol *ob = get_object(s); 
    struct dyn_lib* ob3 = sample_to_mmap(s);
    char *obj = NULL;
-   if(ob2)
-      obj = ob2->function;
-   if(!obj && ob)
-      obj = ob->function;
+   if(ob)
+      obj = ob->object_name;
    if(!obj && ob3)
       obj = ob3->name;
 
@@ -56,7 +53,7 @@ void sql_parse(struct s* s) {
    if(!o) {
       o = calloc(1, sizeof(*o));
       o->oid = nb_obj++;
-      o->alloc_thr = ob2?ob2->tid:get_pid(s);
+      o->alloc_thr = ob?ob->allocator_tid:get_pid(s);
       o->size = 0;
       o->code = obj;
       o->type = "nimps";
@@ -83,7 +80,7 @@ void sql_parse(struct s* s) {
       "rien",
       0,0,0,0,
       is_distant(s),
-      get_symbol(s)->function,
+      get_function(s)->function_name,
       get_latency(s),
       is_kernel(s)?"kernel":"user",
       cpu_to_node(s->cpu),

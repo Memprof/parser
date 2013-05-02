@@ -137,7 +137,7 @@ void overlap_parse(struct s* s) {
    struct symbol *ob = get_object(s); 
    if(ob == NULL)
       return;
-   void *addr = ob->function;
+   void *addr = ob->object_name;
 
    page_informations_t *v = rbtree_lookup(overlap_tree, addr, pointer_cmp);
    if(!v) {
@@ -145,7 +145,7 @@ void overlap_parse(struct s* s) {
       v->value = calloc(NB_STORED_FIELDS, sizeof(*v->value));
       rbtree_insert(overlap_tree, addr, v, pointer_cmp);
       //v->name = l->name;
-      v->name = ob->function;
+      v->name = ob->object_name;
       if(l->enclosing_lib)
          v->uid = l->enclosing_lib->uid;
    } 

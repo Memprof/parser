@@ -100,22 +100,22 @@ static void init_kernel() {
       line[--line_len] = '\0';
 
       struct symbol *k = symb_new();
-      k->function = malloc(400);
-      int nb_lex = sscanf(line, "%p %c %s\t[%s", &k->ip, &useless_char, k->function, module_name);
+      k->function_name = malloc(400);
+      int nb_lex = sscanf(line, "%p %c %s\t[%s", &k->ip, &useless_char, k->function_name, module_name);
       free(line);
       if (nb_lex < 3)
          goto fail;
       if(!k->ip)
          goto fail;
       if (nb_lex == 4) { 
-         strcat(k->function, " [");
-         strcat(k->function, module_name);
+         strcat(k->function_name, " [");
+         strcat(k->function_name, module_name);
       }   
       symb_insert(kernel, k);
       continue;
 fail:
       //printf("Line %s failed\n", line);
-      free(k->function);
+      free(k->function_name);
       free(k);
    }   
 }
@@ -129,43 +129,43 @@ void init_symbols() {
    s = symb_new();
    data_lib = dyn_lib_new("[data]");
    s->ip = 0;
-   s->function = "[data]";
+   s->function_name = "[data]";
    symb_insert(data_lib,s);
 
    s = symb_new();
    stack_lib = dyn_lib_new("[stack]");
    s->ip = 0;
-   s->function = "[stack]";
+   s->function_name = "[stack]";
    symb_insert(stack_lib,s);
 
    s = symb_new();
    anon_lib = dyn_lib_new("//anon");
    s->ip = 0;
-   s->function = "//anon";
+   s->function_name = "//anon";
    symb_insert(anon_lib,s);
 
    s = symb_new();
    heap_lib = dyn_lib_new("[heap]");
    s->ip = 0;
-   s->function = "[heap]";
+   s->function_name = "[heap]";
    symb_insert(heap_lib,s);
 
    s = symb_new();
    vdso_lib = dyn_lib_new("[vdso]");
    s->ip = 0;
-   s->function = "[vdso]";
+   s->function_name = "[vdso]";
    symb_insert(vdso_lib,s);
 
    s = symb_new();
    invalid_lib = dyn_lib_new("[invalid data]");
    s->ip = 0;
-   s->function = "[invalid data]";
+   s->function_name = "[invalid data]";
    symb_insert(invalid_lib,s);
 
    s = symb_new();
    invalid_addr = dyn_lib_new("[invalid addr]");
    s->ip = 0;
-   s->function = "[invalid addr]";
+   s->function_name = "[invalid addr]";
    symb_insert(invalid_addr,s);
 
    if (elf_version(EV_CURRENT) == EV_NONE)
@@ -354,7 +354,7 @@ static int symb_synthesize_plt_symbols(struct dyn_lib *arr, Elf *elf) {
          snprintf(sympltname, sizeof(sympltname), "%s@plt", elf_sym__name(&sym, symstrs));
          struct symbol *s = symb_new();
          s->ip = (void*)plt_offset;
-         s->function = strdup(sympltname);
+         s->function_name = strdup(sympltname);
          symb_insert(arr, s);
          ++nr;
       }
@@ -369,7 +369,7 @@ static int symb_synthesize_plt_symbols(struct dyn_lib *arr, Elf *elf) {
          snprintf(sympltname, sizeof(sympltname), "%s@plt", elf_sym__name(&sym, symstrs));
          struct symbol *s = symb_new();
          s->ip = (void*)plt_offset;
-         s->function = strdup(sympltname);
+         s->function_name = strdup(sympltname);
          symb_insert(arr, s);
          ++nr;
       }
@@ -414,13 +414,13 @@ void add_lib(char *file) {
       fd = open(file, O_RDONLY);
       if(fd < 0) {
          s->ip = 0;
-         assert(asprintf(&s->function, "[Cannot open lib %s]", file));
+         assert(asprintf(&s->function_name, "[Cannot open lib %s]", file));
          symb_insert(lib, s);
          goto out_close;
       }
    } 
    s->ip = 0;
-   s->function = "[dummy]";
+   s->function_name = "[dummy]";
    symb_insert(lib,s);
 
     Elf_Data *symstrs, *secstrs;
@@ -528,7 +528,7 @@ void add_lib(char *file) {
       s = symb_new();
       s->ip = (void*)sym.st_value;
       s->size = sym.st_size;
-      s->function = strdup(elf_name);
+      s->function_name = strdup(elf_name);
       if(sym.st_value + sym.st_size > biggest_addr)
          biggest_addr = sym.st_value + sym.st_size;
       symb_insert(lib, s);

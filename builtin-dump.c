@@ -153,10 +153,9 @@ void dump_parse(struct s* s) {
       loc_remote[local].arr[loc_remote[local].index].addr = s->ibs_dc_linear;
       loc_remote[local].index++;
    } else if(mode==1) {
-      /* SASHA: Here we print the offset within the 
-       * accessing function in addition to the function itself. 
-       */
       char *var = sample_to_variable(s);
+      struct symbol *fun = get_function(s);
+      struct mmapped_dyn_lib *lib = sample_to_mmap2(s);
       printf("[PID %d TID %d (%s)] [RIP %p] [CPU %d] [ADDR LIN %p (PHYS %p)] [Cache %d Data2 %x] [%s+(0x%lx)] [%s (%s)]\n",
         get_pid(s),
         get_tid(s),
@@ -167,8 +166,8 @@ void dump_parse(struct s* s) {
         (void*)s->ibs_dc_phys,
         (s->ibs_op_data3_low & (1<<7))>>7,
         s->ibs_op_data2_low,
-        get_function(s)->function,
-        get_function(s)->func_offset,   
+        fun?fun->function_name:"unknown function",
+        (fun && lib)?((s->rip - lib->begin + lib->off) - (uint64_t)fun->ip):0, // SASHA - offset of the access inside the function
         var?var:"unknown",
         sample_to_mmap(s)->name
      );
@@ -370,7 +369,7 @@ void dump_show() {
 
          switch(mode) {
             case 2:
-               printf("%llu\t%llu\t%d\t%d\t%30s (%50s)\t%s\taccess %s %p\n", (long long unsigned) addresses[i]->rdt, (long long unsigned) addresses[i]->addr, addresses[i]->pid, addresses[i]->cpu, addresses[i]->sym->function, addresses[i]->sym->file->name, addresses[i]->app, addresses[i]->mmap->name, (void*)((addresses[i]->mmap2)?(addresses[i]->addr - addresses[i]->mmap2->begin + addresses[i]->mmap2->off):0));
+               printf("%llu\t%llu\t%d\t%d\t%30s (%50s)\t%s\taccess %s %p\n", (long long unsigned) addresses[i]->rdt, (long long unsigned) addresses[i]->addr, addresses[i]->pid, addresses[i]->cpu, addresses[i]->sym->function_name, addresses[i]->sym->file->name, addresses[i]->app, addresses[i]->mmap->name, (void*)((addresses[i]->mmap2)?(addresses[i]->addr - addresses[i]->mmap2->begin + addresses[i]->mmap2->off):0));
                break;
             case 3:
             case 4:

@@ -36,7 +36,7 @@ static __unused struct dyn_lib unknown_pid = {
 };
 static struct symbol unknown = {
    .ip = NULL,
-   .function = "[unknown]",
+   .function_name = "[unknown]",
 };
 static struct sample_to_symbol_stats {
    int nb_success;
@@ -204,7 +204,7 @@ struct symbol* sample_to_function(struct s* s) {
       /** SASHA: Here we want to record one more field in our symbol struct:
        * the offset into the function that performed the access. 
        */
-      sym->func_offset =  (s->rip - lib->begin + lib->off) - (uint64_t)sym->ip;
+      //sym->func_offset =  (s->rip - lib->begin + lib->off) - (uint64_t)sym->ip;
 
       sample_to_symbol_stats.nb_success++;
       return sym;
@@ -260,13 +260,6 @@ struct dyn_lib* sample_to_mmap(struct s* s) {
       
       rbtree_node n = p->mmapped_dyn_lib->root;
       struct mmapped_dyn_lib *lib = _ip_to_mmap(n, (void*)s->ibs_dc_linear);
-      /*if(s->rip == 0x617ac0) {
-         struct symbol *ss = get_symbol(s);
-         printf("Req %p in %s\n", (void*)s->ibs_dc_linear, ss->function);
-         rbtree_print(p->mmapped_dyn_lib, print_mmap);
-         die("");
-      }*/
-
       if(!lib) 
          return &unknown_lib;
       if(lib->end < s->ibs_dc_linear) 
@@ -296,11 +289,8 @@ struct symbol* sample_to_static_object(struct s* s) {
          return NULL;
 
       struct symbol *sym = ip_to_symbol(lib->lib, (void*) (s->ibs_dc_linear - lib->begin + lib->off));
-      if(!sym || !strcmp(sym->function, "//anon")) {
-         /*printf("Req %p\n", s->ibs_dc_linear);
-         rbtree_print(p->mmapped_dyn_lib, print_mmap);*/
+      if(!sym || !strcmp(sym->function_name, "//anon")) {
          struct mmapped_dyn_lib *new_lib = _ip_to_mmap(n, (void*)lib->begin - 1);
-         //struct mmapped_dyn_lib *new_lib = _ip_to_mmap(n, (void*)0x400000);
          if(!new_lib || s->ibs_dc_linear > new_lib->begin + new_lib->lib->real_size) 
             return NULL;
          sym = ip_to_symbol(new_lib->lib, (void*) (s->ibs_dc_linear - new_lib->begin + new_lib->off));
@@ -309,10 +299,6 @@ struct symbol* sample_to_static_object(struct s* s) {
          lib = new_lib;
       }
       if((s->ibs_dc_linear - lib->begin + lib->off) - (uint64_t)sym->ip > sym->size) {
-         /*if(strcmp(lib->lib->name, "//anon")) {
-            printf("Ignoring symbol %s (%p -> %p on lib %s [%p-%p %p])\n", sym->function, s->ibs_dc_linear, sym->ip, lib->lib->name, lib->begin, lib->end, lib->off);
-            rbtree_print(p->mmapped_dyn_lib, print_mmap);
-         }*/
          return NULL;
       }
 

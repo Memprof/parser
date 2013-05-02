@@ -803,10 +803,6 @@ int get_addr_node(struct s *s) {
    return phys_to_node(s->ibs_dc_phys);
 }
 
-struct symbol *get_symbol(struct s *s) {
-   return sample_to_function(s);
-}
-
 struct symbol *get_function(struct s *s) {
    return sample_to_function(s);
 }
@@ -823,8 +819,8 @@ struct symbol *get_object(struct s *s) {
 }
 
 char *get_function_name(struct s *s) {
-   struct symbol * sym = get_symbol(s);
-   return sym?sym->function:"";
+   struct symbol * sym = get_function(s);
+   return sym?sym->function_name:"";
 }
 
 struct dyn_lib* get_mmap(struct s *s) {

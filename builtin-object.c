@@ -43,9 +43,9 @@ void print_callchain(struct s* s) {
 
    int i;
    printf("Object was allocated from the following path:\n");
-   printf("\t%s [%p]\n", ss->function, (void*)s->rip);
+   printf("\t%s [%p]\n", ss->object_name, (void*)s->rip);
    for(i = 0; i < ss->callchain_size; i++) {
-      printf("\t%*.*s%s [%p]\n", (i+1)*2,(i+1)*2, "", sample_to_callchain(s, ss, i)->function, (void*)ss->callchain[i]);
+      printf("\t%*.*s%s [%p]\n", (i+1)*2,(i+1)*2, "", sample_to_callchain(s, ss, i)->function_name, (void*)ss->callchain[i]);
    }
 
    printf("Object is here: %lx-%lx\n",
@@ -78,7 +78,7 @@ int print_timeline(void *key, void *value) {
    int *v = rbtree_lookup(tids, (void*)(long)tid, int_cmp);
    assert(v);
 
-   char *func = get_symbol(value)->function;
+   char *func = get_function(value)->function_name;
    int i;
    for(i = 0; i < v[0]; i++) {
       printf("%*.*s", SPACES, SPACES, "");

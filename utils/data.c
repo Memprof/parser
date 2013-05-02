@@ -96,22 +96,22 @@ void add_alloc_ev(struct malloc_event *m) {
    s->uid = alloc_evts;
    s->ip = (void*)m->addr;
    s->size = m->alloc_size;
-   s->tid = m->tid;
-   s->cpu = m->cpu;
+   s->allocator_tid = m->tid;
+   s->allocator_cpu = m->cpu;
    s->file = anon_lib;
 
    rbtree_node n = p->mmapped_dyn_lib->root;
    struct mmapped_dyn_lib *lib = _ip_to_mmap(n, (void*)m->alloc_ip);
    if(!lib || lib->end < (uint64_t)m->alloc_ip) {
-      asprintf(&s->function, "[unknownlib]+%p", (void*) (m->alloc_ip) );
+      asprintf(&s->object_name, "[unknownlib]+%p", (void*) (m->alloc_ip) );
    } else {
       struct symbol *sym = ip_to_symbol(lib->lib, (void*) (m->alloc_ip - lib->begin + lib->off));
       if(!sym) {
-         asprintf(&s->function, "%s:?+%p", lib->lib->name, (void*) (m->alloc_ip - lib->begin + lib->off) );
+         asprintf(&s->object_name, "%s:?+%p", lib->lib->name, (void*) (m->alloc_ip - lib->begin + lib->off) );
       } else {
          /*if(!strcmp(sym->function, "makeMatrix"))
             printf("IP=%p\n", (void*)m->alloc_ip);*/
-         asprintf(&s->function, "%s+%p", sym->function, (void*) (m->alloc_ip - lib->begin + lib->off) - (uint64_t)sym->ip);
+         asprintf(&s->object_name, "%s+%p", sym->function_name, (void*) (m->alloc_ip - lib->begin + lib->off) - (uint64_t)sym->ip);
       }
    }
 
@@ -128,7 +128,7 @@ void add_alloc_ev(struct malloc_event *m) {
 }
 
 static __unused int symb_print(void *key, void* value) {
-   printf("%p-%p: %s\n", key, (void*)(uint64_t) key+((struct symbol*)value)->size, ((struct symbol*)value)->function);
+   printf("%p-%p: %s\n", key, (void*)(uint64_t) key+((struct symbol*)value)->size, ((struct symbol*)value)->object_name);
    return 0;
 }
 
@@ -180,7 +180,7 @@ struct symbol* sample_to_variable2(struct s* s) {
 }
 char* sample_to_variable(struct s* s) {
    struct symbol* ss = sample_to_variable2(s);
-   return ss?ss->function:"[unknown]";
+   return ss?ss->object_name:"[unknown]";
 }
 void show_data_stats() {
 }

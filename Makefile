@@ -54,7 +54,7 @@ endif
 all : makefile.dep parse
 
 makefile.dep : *.[Cch] utils/*.[Cch]
-	for i in *.[Cc] utils/*.[Cch]; do gcc -MM "$${i}" ${CFLAGS}; done > $@
+	for i in *.[Cc] utils/*.[Cch]; do echo -n `dirname "$${i}"`/; gcc -MM "$${i}" ${CFLAGS}; done > $@
 
 -include makefile.dep
 

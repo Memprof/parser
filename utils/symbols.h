@@ -28,20 +28,39 @@ struct dyn_lib {
    struct mmapped_dyn_lib *enclosing_lib;
 };
 
-/* See various functions in process.h to know how to get a struct symbol from an IBS sample */
+/* A struct symbol represents either an object or a function
+ * because fundamentally a function and an object are the same things (data in memory).
+ * To clarify the code, some fields are anonymous unions.
+ */
 struct symbol {
-   int uid;
-   void *ip; /** WARN: this is the translated IP inside the mmaped file. Hard to link with an actual RIP. */
-   struct dyn_lib *file;
-   char *function;
-   uint64_t func_offset;   /* SASHA */
+   union {
+      int uid;
+      int object_uid;
+      int function_uid;
+   };
+   union {
+      void *ip; /** WARN: this is the translated IP inside the mmaped file. Hard to link with an actual RIP. */
+                /** It is the virtual address of the function, not of the access. To have the IP of the access, use struct s -> rip. */
+      void *function_virt_addr;
+      void *object_virt_addr;
+   };
+   union {
+      struct dyn_lib *file;
+      struct dyn_lib *mmap_containing_function;
+      struct dyn_lib *mmap_containing_object;
+   };
+   union {
+      char *function_name;
+      char *object_name; // the object "name" if the name of the function that allocated it +offset (e.g. myfun()+0x60)
+   };
 
-   int tid;
-   int cpu;
-   size_t size;
+   /** WARN: all fields bellow are only initialized for objects (vs functions) */
+   int allocator_tid;   // tid that allocated the object
+   int allocator_cpu;   // cpu from which the object was allocated
+   size_t size;         // size of the object 
    
-   uint64_t callchain_size;
-   uint64_t callchain[];
+   uint64_t callchain_size;   // array of the array bellow
+   uint64_t callchain[];      // callchain of functions that led to the object allocation
 };
 
 

@@ -59,8 +59,8 @@ struct value {
 };
 
 void top_obj_parse(struct s* s) {
-   struct symbol *sym = get_symbol(s);
-   if(strstr(sym->function, "plt")) {
+   struct symbol *sym = get_function(s);
+   if(strstr(sym->function_name, "plt")) {
       nb_plt++;
    }
    else
@@ -70,11 +70,11 @@ void top_obj_parse(struct s* s) {
       struct dyn_lib* ob3 = sample_to_mmap(s);
       char *obj = NULL;
       if(ob)
-         obj = ob->function;
-      if(!obj && strstr(sym->function, "@plt"))
-         obj = sym->function;
-       if(!obj && !strcmp(sym->function, "[vdso]"))
-         obj = sym->function;
+         obj = ob->object_name;
+      if(!obj && strstr(sym->function_name, "@plt"))
+         obj = sym->function_name;
+       if(!obj && !strcmp(sym->function_name, "[vdso]"))
+         obj = sym->function_name;
       if(!obj && ob3) 
          obj = ob3->name;
       struct value *value = rbtree_lookup(r, obj, cmp);
@@ -89,13 +89,13 @@ void top_obj_parse(struct s* s) {
       value->from_accesses[cpu_to_node(s->cpu)]++;
       value->to_accesses[get_addr_node(s)]++;
       if(ob) {
-         value->dist_by_allocator += (is_distant(s) && (get_tid(s) == ob->tid));
-         value->dist_by_allocator_remote_cpu += (is_distant(s) && (get_tid(s) == ob->tid) && (ob->cpu != s->cpu));
-         value->dist_by_allocator_alloc_cpu += (is_distant(s) && (get_tid(s) == ob->tid) && (ob->cpu == s->cpu));
+         value->dist_by_allocator += (is_distant(s) && (get_tid(s) == ob->allocator_tid));
+         value->dist_by_allocator_remote_cpu += (is_distant(s) && (get_tid(s) == ob->allocator_tid) && (ob->allocator_cpu != s->cpu));
+         value->dist_by_allocator_alloc_cpu += (is_distant(s) && (get_tid(s) == ob->allocator_tid) && (ob->allocator_cpu == s->cpu));
          value->dist_for_obj += (is_distant(s));
    
-         value->by_allocator += ((get_tid(s) == ob->tid));
-         value->by_everybody += ((get_tid(s) != ob->tid));
+         value->by_allocator += ((get_tid(s) == ob->allocator_tid));
+         value->by_everybody += ((get_tid(s) != ob->allocator_tid));
 
          value->by_allocator_before_everybody += (value->by_everybody == 0);
          value->uid = ob->uid;
@@ -104,7 +104,7 @@ void top_obj_parse(struct s* s) {
    }
 }
 
-static int distant = 0, pin_avoid = 0, pin_ok = 0, bad_alloc = 0, alloc_self = 0, total_alloc = 0;
+static int distant = 0, pin_avoid = 0, bad_alloc = 0, alloc_self = 0, total_alloc = 0;
 static int print_static(void *key, void *value) {
    struct value *v = value;
    printf("'%5d-%25s' - %d [%d %d%% local] [%.2f%% total] [%d %.2f pin] [%d %.2f badalloc]\n", 

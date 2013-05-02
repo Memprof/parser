@@ -42,7 +42,7 @@ static int sym_cmp(void *a, void *b) {
 }
 
 void top_fun_parse(struct s* s) {
-   struct symbol *sym = get_symbol(s);
+   struct symbol *sym = get_function(s);
    if(sym) {
       int *value = rbtree_lookup(top_tree, sym, /*pointer_cmp*/sym_cmp);
       if(!value) {
@@ -79,7 +79,7 @@ void top_fun_show() {
       printf("%8d %5.2f%% %50s [%30s] (%s%.2f%%"RESET" local) [accesses to", 
             vals[0],
             100.*((float)vals[0])/((float)nb_samples),
-            cluster_by_lib?"-":(((struct symbol*)sorted->vals[i]->key)->function),
+            cluster_by_lib?"-":(((struct symbol*)sorted->vals[i]->key)->function_name),
             short_name(((struct symbol*)sorted->vals[i]->key)->file->name),
             color,
             (float)100.*((float)vals[2])/((float)vals[1]+vals[2]));

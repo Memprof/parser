@@ -72,7 +72,6 @@ struct symbol *get_function(struct s *s);
 struct symbol *get_object(struct s *s);
 struct dyn_lib* get_mmap(struct s *s);
 char *get_function_name(struct s *s);
-struct symbol *get_symbol(struct s *s); //same as get_function
 
 char *get_app(struct s *s);
 int is_distant(struct s *s);
