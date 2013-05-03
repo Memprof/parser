@@ -135,7 +135,7 @@ static int print_static(void *key, void *value) {
 static __unused int static_cmp(const void *a, const void* b) {
    const rbtree_node _a = *(const rbtree_node*) a;
    const rbtree_node _b = *(const rbtree_node*) b;
-   return *(int*)_b->value - *(int*)_a->value;
+   return ((struct value*)_b->value)->accesses - ((struct value*)_a->value)->accesses;
 }
 void top_obj_show() {
    printf("PLT: %d\tNONPLT: %d\n", nb_plt, nb_non_plt);
