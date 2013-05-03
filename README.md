@@ -8,8 +8,13 @@ WARNING: In order to compile the parser, you MUST have a copy of the Memprof Ker
 Usage:
 
 ```bash
+../scripts/profile_app.sh <app>
+
+or 
+
 make 
 sudo insmod ../module/memprof.ko 
+rm /tmp/data.*
 echo b > /proc/memprof_cntl 
 LD_PRELOAD=../library/ldlib.so <app> 
 echo e > /proc/memprof_cntl 
