@@ -91,7 +91,8 @@ char *alloc_location = NULL;
 void usage() {
    fprintf(stderr, "Usage : ./parse [--perf perf.raw] [--data data.processed.raw] [option] ibs.raw\n");
    fprintf(stderr, "\nTo obtain .raw files:\n");
-   fprintf(stderr, "\tsudo insmod ../module/memprof.ko; echo b > /proc/memprof_cntl;\n");
+   fprintf(stderr, "\tUse ../scripts/profile_app.sh or type the following commands:\n");
+   fprintf(stderr, "\trm /tmp/data.raw.*; sudo insmod ../module/memprof.ko; echo b > /proc/memprof_cntl;\n");
    fprintf(stderr, "\tLD_PRELOAD=../library/ldlib.so <app>;\n");
    fprintf(stderr, "\techo e > /proc/memprof_cntl;\n");
    fprintf(stderr, "\tcat /proc/memprof_ibs > ibs.raw\n");
@@ -102,9 +103,9 @@ void usage() {
    fprintf(stderr, "\t-X, --top-obj [-2]      \tShow most accessed objects\n");
    fprintf(stderr, "\t                        \tAdd a -2 to cluster objects by the location (function) where they were allocated\n");
    fprintf(stderr, "\t--obj <uid>             \tShow access patterns to object <uid> (uid can be found with option -X)\n");
-   fprintf(stderr, "\t--pages <uid>           \tShow accesses to pages of object <uid> (uid can be found with option -X)\n");
-   fprintf(stderr, "\t--get-npages <library>  \tShow number of accessed pages of library <library> (e.g. libc.so)\n");
+   fprintf(stderr, "\t--pages <uid>           \tShow accesses to pages of object <uid> (uid can be found with option -X; when uid=0 show access to all pages)\n");
    fprintf(stderr, "\t--top-mmap              \tShow most accesses mmmaps (less precise than objects)\n");
+   fprintf(stderr, "\t--get-npages <mmap>     \tShow number of accessed pages of mmap <mmap> (e.g. libc.so)\n");
    fprintf(stderr, "\t-Z <size> [-2]          \tReturns ranges of virtual addresses where most of the accesses are performed (less precise than mmaps)\n");
    fprintf(stderr, "\t                        \tIf two addresses are separated by less than <size>, they are grouped in the same cluster\n");
    fprintf(stderr, "\t                        \tAdd a '-2' after to size to cluster by physical addresses (meaningless most of the time)\n");
@@ -131,7 +132,9 @@ void usage() {
    fprintf(stderr, "\t                        \t* 9: Locality of memory accesses plot'able with ../scripts/locality.cmd\n");
    fprintf(stderr, "\t--sched <app>           \tTaskset <app> according to its memory accesses pattern\n");
    fprintf(stderr, "\t                        \tMultiple apps may be specified with multiple --sched parameters\n");
+   fprintf(stderr, "\t                        \tSee ../scripts/move_processes_close_to_their_pages.pl to learn how to use this option\n");
    fprintf(stderr, "\t--migrate               \tMigrate memory pages close to the thread using them most\n");
+   fprintf(stderr, "\t                        \tSee ../scripts/move_unshared_page_close_to_their_owner.pl to learn how to use this option\n");
    fprintf(stderr, "\t--sql                   \tConvert a profiling file to an SQL dump\n");
    fprintf(stderr, "\nOther options (filters):\n");
    fprintf(stderr, "\t-a, --app <app>         \tShow only samples of application <app>\n");
@@ -201,7 +204,7 @@ void parse_options(int argc, char** argv) {
          {"sched",  required_argument, 0, '%'},
          {"get-sched-stats",  required_argument, 0, '$'},
          {"obj",  required_argument, 0, '@'},
-         {"pages",  optional_argument, 0, '\''},
+         {"pages",  required_argument, 0, '\''},
          {"migrate",  no_argument, 0, '<'},
          {"zones",  optional_argument, 0, 'Z'},
          {"node",  required_argument, 0, '_'},
@@ -240,7 +243,7 @@ void parse_options(int argc, char** argv) {
       };
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "hmd!a:p:Cc:ukO:t:T:SN:(:_:%:Mf:;.iIv$:P:+:=:W>:/:B:123456789Q:lLF:Z:é:|{:[:V<]}XY:s@:`", long_options, &option_index);
+      c = getopt_long (argc, argv, "hmd!a:p:Cc:ukO:t:T:SN:(:_:%:Mf:;.iIv$:P:+:=:W>:/:B:123456789Q:lLF:Z:é:|{:[:V<]}XY:s@:`':'", long_options, &option_index);
       if (c == -1)
          break;
 
