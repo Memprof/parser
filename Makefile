@@ -31,23 +31,46 @@ OBJECTS = ./utils/symbols.o \
 
 .PHONY: all clean 
 
-
-has_bfd := $(shell sh -c "(echo '\#include <bfd.h>'; echo 'int main(void) { bfd_demangle(0, 0, 0); return 0; }') | $(CC) -x c - -lbfd && rm a.out && echo y")
-ifeq ($(has_bfd),y)
-else
-   $(error $(has_bfd) No bfd.h/libbfd found, install binutils-dev[el]/zlib-static to gain symbol demangling)
+VERBOSE ?= n
+is_error := n
+has_bfd := $(shell sh -c "(echo '\#include <bfd.h>'; echo 'int main(void) { bfd_demangle(0, 0, 0); return 0; }') | $(CC) -x c - -lbfd 2>&1 && rm a.out && echo y")
+ifneq ($(has_bfd),y)
+   is_error := y
+   ifeq ($(VERBOSE), n)
+      has_bfd := 
+   endif
+   $(warning $(has_bfd) No bfd.h/libbfd found, install binutils-dev.)
 endif
 
-has_glib := $(shell sh -c "(echo 'int main(void) { return 0; }') | $(CC) -x c - -lglib-2.0 && rm a.out && echo y")
-ifeq ($(has_glib),y)
-else
-   $(error $(has_glib) No glib2.0 found. Install libglib2.0-dev.)
+has_elf := $(shell sh -c "(echo '\#include <libelf.h>'; echo 'int main(void) { return 0; }') | $(CC) -x c - 2>&1 && rm a.out && echo y")
+ifneq ($(has_elf),y)
+   is_error := y
+   ifeq ($(VERBOSE), n)
+      has_elf := 
+   endif
+   $(warning $(has_elf) No libelf.h found, install libelf-dev.)
 endif
 
-has_numa := $(shell sh -c "(echo 'int main(void) { return 0; }') | $(CC) -x c - -lnuma && rm a.out && echo y")
-ifeq ($(has_numa),y)
-else
-   $(error $(has_numa) No libnuma found. Install libnuma-dev.)
+has_glib := $(shell sh -c "(echo 'int main(void) { return 0; }') | $(CC) -x c - -lglib-2.0 2>&1 && rm a.out && echo y")
+ifneq ($(has_glib),y)
+   is_error := y
+   ifeq ($(VERBOSE), n)
+      has_glib := 
+   endif
+   $(warning $(has_glib) No glib2.0 found. Install libglib2.0-dev.)
+endif
+
+has_numa := $(shell sh -c "(echo 'int main(void) { return 0; }') | $(CC) -x c - -lnuma 2>&1 && rm a.out && echo y")
+ifneq ($(has_numa),y)
+   is_error := y
+   ifeq ($(VERBOSE), n)
+      has_numa := 
+   endif
+   $(warning $(has_numa) No libnuma found. Install libnuma-dev.)
+endif
+
+ifeq ($(is_error),y)
+   $(error Exiting due to missing dependencies; use "VERBOSE=yes make" to show detailled error messages.)
 endif
 
 
