@@ -12,7 +12,6 @@ Usage:
 
 or 
 
-make 
 sudo insmod ../module/memprof.ko 
 rm /tmp/data.*
 echo b > /proc/memprof_cntl 
