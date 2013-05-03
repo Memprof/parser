@@ -112,7 +112,7 @@ static __unused int top_cmp(const void *a, const void* b) {
 void obj_show() {
    int i;
 
-   printf("Timeline of memory access: (x = load, * = write, one column per tid):\n"),
+   printf("Timeline of memory access (x = load, * = write, one column per tid) - you may need to use left/right arrows to see the function names:\n"),
    rbtree_print(timeline, print_timeline);
 
    printf("\n\n\n");
