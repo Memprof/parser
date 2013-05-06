@@ -33,7 +33,7 @@ OBJECTS = ./utils/symbols.o \
 
 VERBOSE ?= n
 is_error := n
-has_bfd := $(shell sh -c "(echo '\#include <bfd.h>'; echo 'int main(void) { bfd_demangle(0, 0, 0); return 0; }') | $(CC) -x c - -lbfd 2>&1 && rm a.out && echo y")
+has_bfd := $(shell sh -c "(echo '\#define PACKAGE'; echo '\#include <bfd.h>'; echo 'int main(void) { bfd_demangle(0, 0, 0); return 0; }') | $(CC) -x c - -lbfd 2>&1 && rm a.out && echo y")
 ifneq ($(has_bfd),y)
    is_error := y
    ifeq ($(VERBOSE), n)

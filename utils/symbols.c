@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <gelf.h>
 #include <elf.h>
 #include <fcntl.h>
+#define PACKAGE  //hack for Gentoo
 #include <bfd.h>
 #include <limits.h>
 
