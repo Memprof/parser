@@ -6,6 +6,7 @@ WARNING: In order to compile the parser, you MUST have a copy of the Memprof Ker
 
 
 Usage:
+(To get the scripts, the module and the library referenced in the following code, see https://github.com/Memprof.)
 
 ```bash
 ../scripts/profile_app.sh <app>
