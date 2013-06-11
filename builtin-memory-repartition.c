@@ -25,8 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define SHOW_MIN_THRES 1
 
-static int *memory_repartition_on_nodes;
-static int *sample_repartition_on_cpus;
+static int *memory_repartition_on_nodes = NULL;
+static int *sample_repartition_on_cpus = NULL;
+
 static int nb_seen_pages = 0;
 
 static rbtree memory_repartition_tree;
@@ -121,6 +122,12 @@ void memory_repartition_show() {
 void memory_repartition_init() {
    memory_repartition_tree = rbtree_create();
    app_repartition_tree = rbtree_create();
+
+   if(!memory_repartition_on_nodes)
+      memory_repartition_on_nodes = calloc(1, sizeof(*memory_repartition_on_nodes)*max_node);
+   if(!sample_repartition_on_cpus)
+      sample_repartition_on_cpus = calloc(1, sizeof(*sample_repartition_on_cpus)*max_cpu);
+
    memset(memory_repartition_on_nodes, 0, sizeof(memory_repartition_on_nodes));
    memset(sample_repartition_on_cpus, 0, sizeof(sample_repartition_on_cpus));
 }
