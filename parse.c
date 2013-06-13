@@ -334,9 +334,9 @@ void parse_options(int argc, char** argv) {
             break;
 
          case 'C':
-            init = memory_repartition_init;
-            parse = memory_repartition_parse;
-            show_results = memory_repartition_show;
+            init = mem_hierarchy_init;
+            parse = mem_hierarchy_parse;
+            show_results = mem_hierarchy_show;
             break;
 
          case 'O':
