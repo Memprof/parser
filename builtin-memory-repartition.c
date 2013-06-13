@@ -103,9 +103,9 @@ void memory_repartition_show() {
    //rbtree_print(memory_repartition_tree, memory_repartition_print);
 
    int i, sum = 0;
-   for(i = 0; i < 4; i++) 
+   for(i = 0; i < max_node; i++) 
       sum += memory_repartition_on_nodes[i];
-   for(i = 0; i < 4; i++) {
+   for(i = 0; i < max_node; i++) {
       printf("#Node %d: %d (%.2f%%)\n", i, memory_repartition_on_nodes[i], 100.*((float)memory_repartition_on_nodes[i])/((float)sum));
    }
 #if 1
@@ -127,7 +127,4 @@ void memory_repartition_init() {
       memory_repartition_on_nodes = calloc(1, sizeof(*memory_repartition_on_nodes)*max_node);
    if(!sample_repartition_on_cpus)
       sample_repartition_on_cpus = calloc(1, sizeof(*sample_repartition_on_cpus)*max_cpu);
-
-   memset(memory_repartition_on_nodes, 0, sizeof(memory_repartition_on_nodes));
-   memset(sample_repartition_on_cpus, 0, sizeof(sample_repartition_on_cpus));
 }
