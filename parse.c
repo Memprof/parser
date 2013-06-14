@@ -207,7 +207,7 @@ void parse_options(int argc, char** argv) {
          {"cpu",  required_argument, 0, 'c'},
          {"sched",  required_argument, 0, '%'},
          {"get-sched-stats",  required_argument, 0, '$'},
-         {"get-migr-stats",  required_argument, 0, '^'},
+         {"get-migr-stats",  no_argument, 0, '^'},
          {"obj",  required_argument, 0, '@'},
          {"pages",  required_argument, 0, '\''},
          {"migrate",  no_argument, 0, '<'},
