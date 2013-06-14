@@ -31,7 +31,7 @@ void get_sched_stats_init() {
    }
 }
 
-static int changes = 0;
+static int changes = -1;
 static int last_node = -1;
 static int pid_found = -1;
 void get_sched_stats_parse(struct s* s) {
@@ -48,7 +48,7 @@ void get_sched_stats_show() {
    if(changes == 0) {
       printf("Tid %d not found\n", tid_to_find);
    } else {
-      printf("Tid %d (pid %d) has move %d times between nodes\n", tid_to_find, pid_found, changes);
+      printf("Tid %d (pid %d) has moved %d times between nodes\n", tid_to_find, pid_found, changes);
    }
 }
 

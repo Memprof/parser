@@ -126,7 +126,7 @@ void usage() {
    fprintf(stderr, "\t                        \t* 2: dump IBS samples with function and accessed variables\n");
    fprintf(stderr, "\t                        \t* 3-4: legacy options, not useful anymore\n");
    fprintf(stderr, "\t                        \t* 5: Breakdown of latency of memory accesses\n");
-   fprintf(stderr, "\t                        \t* 6: For each studied threads, the number of cpu switch\n");
+   fprintf(stderr, "\t                        \t* 6: For each studied threads, the number of cpu on which the thread was seen (1=no context switch)\n");
    fprintf(stderr, "\t                        \t* 7: Linear addresses touched by all threads plot'able with ../scripts/threads.cmd\n");
    fprintf(stderr, "\t                        \t* 8: Physical addresses touched by all threads plot'able with ../scripts/threads.cmd\n");
    fprintf(stderr, "\t                        \t* 9: Locality of memory accesses plot'able with ../scripts/locality.cmd\n");
