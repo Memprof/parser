@@ -27,6 +27,7 @@ OBJECTS = ./utils/symbols.o \
 			 builtin-sql.o \
 			 builtin-object.o \
 			 builtin-pages.o \
+			 builtin-get-migr-stats.o \
 			 parse.o 
 
 .PHONY: all clean 

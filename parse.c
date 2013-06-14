@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "builtin-memory-repartition.h" // -m
 #include "builtin-get-sched-stats.h"    // --get-sched-stats <tid>
 #include "builtin-get-npages.h"         // --get-npages <tid>
+#include "builtin-get-migr-stats.h"     // --get-migr-stats
 
 
 /* Options stat might modify the machine state (thread placement, etc.) */
@@ -121,6 +122,7 @@ void usage() {
    fprintf(stderr, "\t-C                      \tShow stats: memory access repartition (DRAM/Stack/... User/Kernel/...)\n");
    fprintf(stderr, "\t-S, --stats             \tShow stats: number of accessed pages per tid, per core to each node, with nice colors\n");
    fprintf(stderr, "\t--get-sched-stats <tid> \tReturns the number of node changes of <tid> (and also outputs the pid of <tid>)\n");
+   fprintf(stderr, "\t--get-migr-stats        \tReturns the number of page migrations\n");
    fprintf(stderr, "\t-dX                     \tDump raw file in a readable format (X in {1..9}, 1 is default)\n");
    fprintf(stderr, "\t                        \t* 1: dump IBS samples without any analysis\n");
    fprintf(stderr, "\t                        \t* 2: dump IBS samples with function and accessed variables\n");
@@ -205,6 +207,7 @@ void parse_options(int argc, char** argv) {
          {"cpu",  required_argument, 0, 'c'},
          {"sched",  required_argument, 0, '%'},
          {"get-sched-stats",  required_argument, 0, '$'},
+         {"get-migr-stats",  required_argument, 0, '^'},
          {"obj",  required_argument, 0, '@'},
          {"pages",  required_argument, 0, '\''},
          {"migrate",  no_argument, 0, '<'},
@@ -245,7 +248,7 @@ void parse_options(int argc, char** argv) {
       };
       int option_index = 0;
 
-      c = getopt_long (argc, argv, "hmd!a:p:Cc:ukO:t:T:SN:(:_:%:Mf:;.iIv$:P:+:=:W>:/:B:123456789Q:lLF:Z:é:|{:[:V<]}XY:s@:`':'", long_options, &option_index);
+      c = getopt_long (argc, argv, "hmd!a:p:Cc:ukO:t:T:SN:(:_:%:Mf:;.iIv$:P:+:=:W>:/:B:123456789Q:lLF:Z:é:|{:[:V<]}XY:s@:`':'^", long_options, &option_index);
       if (c == -1)
          break;
 
@@ -392,6 +395,12 @@ void parse_options(int argc, char** argv) {
             parse = sched_parse;
             show_results = sched_show;
             sched_add_application(optarg);
+            break;
+
+         case '^':
+            init = get_migr_stats_init;
+            parse = get_migr_stats_parse;
+            show_results = get_migr_stats_show;
             break;
 
          case 'M':
